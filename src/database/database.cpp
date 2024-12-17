@@ -48,21 +48,26 @@ bool Database::createTables() {
         "title TEXT NOT NULL,"
         "department TEXT NOT NULL,"
         "description TEXT NOT NULL,"
-        "pay_rate REAL NOT NULL"
+        "pay_rate REAL NOT NULL,"
+        "requirements TEXT,"
+        "benefits TEXT"
         ")"
         );
     if (!success) return false;
 
-    // Insert sample job data if table is empty
+    // Insert sample jobs if table is empty
     query.exec("SELECT COUNT(*) FROM jobs");
     if (query.next() && query.value(0).toInt() == 0) {
-        query.exec("INSERT INTO jobs (title, department, description, pay_rate) VALUES "
-                   "('Student Assistant', 'Computer Science', 'Help with lab sessions', 15.00),"
-                   "('Library Assistant', 'Library', 'Help students find resources', 16.00),"
-                   "('IT Support', 'IT Services', 'Provide technical support', 17.50)");
+        success = query.exec(
+            "INSERT INTO jobs (title, department, description, pay_rate, requirements, benefits) VALUES "
+            "('Student Assistant', 'Computer Science', 'Help with lab sessions', 15.00, 'Knowledge of programming', 'Flexible hours'),"
+            "('Library Assistant', 'Library', 'Help students find resources', 16.00, 'Good organization skills', 'Weekend bonus'),"
+            "('IT Support', 'IT Services', 'Provide technical support', 17.50, 'Basic IT knowledge', 'Training provided')"
+            );
+        if (!success) return false;
     }
 
-    return true;
+    return true;  // Add explicit return
 }
 
 bool Database::validateLogin(const QString& username, const QString& password) {
@@ -132,3 +137,4 @@ User Database::getUserData(const QString& username) {
 
     return User();
 }
+

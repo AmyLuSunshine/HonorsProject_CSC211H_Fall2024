@@ -1,22 +1,15 @@
 #include "auth/registerwindow.h"
 #include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QMessageBox>
-#include <QRegularExpression>
-#include <QDebug>
-#include <QWidget>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QVBoxLayout>
+#include <QMessageBox>
+#include <QRegularExpression>
 
 RegisterWindow::RegisterWindow(Database* db, QWidget *parent)
     : QWidget(parent), database(db) {
     setupUI();
     setupStyles();
-
-    setWindowTitle("Register - Campus Jobs Portal");
-    setFixedSize(400, 600);
 }
 
 void RegisterWindow::setupUI() {
@@ -24,41 +17,47 @@ void RegisterWindow::setupUI() {
     mainLayout->setSpacing(20);
     mainLayout->setContentsMargins(50, 50, 50, 50);
 
-    // Title
     titleLabel = new QLabel("Create Account", this);
     titleLabel->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(titleLabel);
 
     // Email
     emailEdit = new QLineEdit(this);
-    emailEdit->setPlaceholderText("Email (@stu.bmcc.cuny.edu)");
+    emailEdit->setPlaceholderText("BMCC Email (@stu.bmcc.cuny.edu)");
+    emailEdit->setMinimumHeight(40);
     mainLayout->addWidget(emailEdit);
+    connect(emailEdit, &QLineEdit::textChanged, this, &RegisterWindow::validateEmail);
 
-    // Username
-    usernameEdit = new QLineEdit(this);
-    usernameEdit->setPlaceholderText("Username");
-    mainLayout->addWidget(usernameEdit);
+    // EMPLID
+    emplidEdit = new QLineEdit(this);
+    emplidEdit->setPlaceholderText("EMPLID");
+    emplidEdit->setMinimumHeight(40);
+    mainLayout->addWidget(emplidEdit);
 
-    // First Name
-    firstNameEdit = new QLineEdit(this);
-    firstNameEdit->setPlaceholderText("First Name");
-    mainLayout->addWidget(firstNameEdit);
+    // Major
+    majorEdit = new QLineEdit(this);
+    majorEdit->setPlaceholderText("Major");
+    majorEdit->setMinimumHeight(40);
+    mainLayout->addWidget(majorEdit);
 
-    // Last Name
-    lastNameEdit = new QLineEdit(this);
-    lastNameEdit->setPlaceholderText("Last Name");
-    mainLayout->addWidget(lastNameEdit);
+    // GPA
+    gpaEdit = new QLineEdit(this);
+    gpaEdit->setPlaceholderText("GPA");
+    gpaEdit->setMinimumHeight(40);
+    mainLayout->addWidget(gpaEdit);
 
     // Password
     passwordEdit = new QLineEdit(this);
     passwordEdit->setPlaceholderText("Password");
     passwordEdit->setEchoMode(QLineEdit::Password);
+    passwordEdit->setMinimumHeight(40);
     mainLayout->addWidget(passwordEdit);
 
     // Confirm Password
     confirmPasswordEdit = new QLineEdit(this);
     confirmPasswordEdit->setPlaceholderText("Confirm Password");
     confirmPasswordEdit->setEchoMode(QLineEdit::Password);
+    confirmPasswordEdit->setMinimumHeight(40);
     mainLayout->addWidget(confirmPasswordEdit);
 
     // Error label
@@ -69,6 +68,7 @@ void RegisterWindow::setupUI() {
 
     // Register button
     registerButton = new QPushButton("Register", this);
+    registerButton->setMinimumHeight(40);
     mainLayout->addWidget(registerButton);
 
     // Login link
@@ -78,14 +78,16 @@ void RegisterWindow::setupUI() {
     // Connect signals
     connect(registerButton, &QPushButton::clicked, this, &RegisterWindow::handleRegistration);
     connect(loginButton, &QPushButton::clicked, this, &RegisterWindow::onLoginClicked);
+
+    setFixedSize(400, 700);
 }
 
 void RegisterWindow::setupStyles() {
     setStyleSheet(
         "QWidget { background-color: #FFFFFF; }"
-        "QLabel { font-size: 16px; color: #333333; }"  // Darkened label text
-        "QLineEdit { padding: 10px; border: 2px solid #E0E0E0; border-radius: 5px; margin: 5px 0; "
-        "           font-size: 14px; color: #333333; background-color: #FFFFFF; }"  // Fixed input text
+        "QLabel { font-size: 16px; }"
+        "QLineEdit { padding: 10px; border: 2px solid #E0E0E0; border-radius: 5px; "
+        "           margin: 5px 0; font-size: 14px; color: #333333; }"
         "QPushButton { padding: 10px; background-color: #2196F3; color: white; "
         "             border: none; border-radius: 5px; font-size: 14px; }"
         "QPushButton:hover { background-color: #1976D2; }"
@@ -94,38 +96,21 @@ void RegisterWindow::setupStyles() {
     titleLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #2196F3; margin: 20px 0;");
     loginButton->setStyleSheet(
         "QPushButton { background-color: transparent; color: #2196F3; }"
-        "QPushButton:hover { color: #1976D2; }"
+        "QPushButton:hover { background-color: transparent; color: #1976D2; }"
         );
-
-    errorLabel->setStyleSheet("color: #D32F2F; font-size: 14px; margin-top: 10px;");  // Brighter red error text
 }
 
 void RegisterWindow::handleRegistration() {
     QString email = emailEdit->text();
-    QString username = usernameEdit->text();
     QString password = passwordEdit->text();
     QString confirmPass = confirmPasswordEdit->text();
-    QString firstName = firstNameEdit->text();
-    QString lastName = lastNameEdit->text();
+    QString emplid = emplidEdit->text();
+    QString major = majorEdit->text();
+    QString gpa = gpaEdit->text();
 
-    // Basic validation
-    if (email.isEmpty() || username.isEmpty() || password.isEmpty() ||
-        confirmPass.isEmpty() || firstName.isEmpty() || lastName.isEmpty()) {
-        errorLabel->setText("All fields are required");
-        errorLabel->show();
-        return;
-    }
-
-    // Email validation
-    if (!email.endsWith("@stu.bmcc.cuny.edu")) {
+    // Validation
+    if (!isValidBMCCEmail(email)) {
         errorLabel->setText("Must use @stu.bmcc.cuny.edu email");
-        errorLabel->show();
-        return;
-    }
-
-    // Password validation
-    if (password.length() < 8) {
-        errorLabel->setText("Password must be at least 8 characters");
         errorLabel->show();
         return;
     }
@@ -136,17 +121,30 @@ void RegisterWindow::handleRegistration() {
         return;
     }
 
-    // Try to register
-    if (database->registerUser(username, password, email, firstName, lastName)) {
-        QMessageBox::information(this, "Success", "Registration successful! Please login.");
+    // Register user
+    if (database->registerUser(email, password, email, emplid, major)) {
+        QMessageBox::information(this, "Success", "Registration successful!");
         emit registrationSuccessful();
         emit switchToLogin();
     } else {
-        errorLabel->setText("Username or email already exists");
+        errorLabel->setText("Registration failed. Email might already exist.");
         errorLabel->show();
     }
 }
 
 void RegisterWindow::onLoginClicked() {
     emit switchToLogin();
+}
+
+void RegisterWindow::validateEmail(const QString& email) {
+    if (!email.isEmpty() && !isValidBMCCEmail(email)) {
+        errorLabel->setText("Must use @stu.bmcc.cuny.edu email");
+        errorLabel->show();
+    } else {
+        errorLabel->hide();
+    }
+}
+
+bool RegisterWindow::isValidBMCCEmail(const QString& email) {
+    return email.endsWith("@stu.bmcc.cuny.edu");
 }

@@ -1,5 +1,9 @@
-#pragma once
+#ifndef PROFILEWIDGET_H
+#define PROFILEWIDGET_H
 
+#endif // PROFILEWIDGET_H
+
+#pragma once
 #include <QWidget>
 #include <QLabel>
 #include <QLineEdit>
@@ -11,9 +15,6 @@ class ProfileWidget : public QWidget {
 public:
     explicit ProfileWidget(Database* db, QWidget *parent = nullptr);
     void loadUserProfile(const QString& username);
-
-private slots:
-    void handleSaveClicked();
 
 private:
     void setupUI();

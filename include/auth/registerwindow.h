@@ -1,5 +1,4 @@
 #pragma once
-
 #include <QWidget>
 #include <QLineEdit>
 #include <QPushButton>
@@ -18,18 +17,20 @@ signals:
 private slots:
     void handleRegistration();
     void onLoginClicked();
+    void validateEmail(const QString& email);
 
 private:
     void setupUI();
     void setupStyles();
+    bool isValidBMCCEmail(const QString& email);
 
     Database* database;
     QLineEdit* emailEdit;
-    QLineEdit* usernameEdit;
     QLineEdit* passwordEdit;
     QLineEdit* confirmPasswordEdit;
-    QLineEdit* firstNameEdit;
-    QLineEdit* lastNameEdit;
+    QLineEdit* emplidEdit;
+    QLineEdit* majorEdit;
+    QLineEdit* gpaEdit;
     QPushButton* registerButton;
     QPushButton* loginButton;
     QLabel* titleLabel;

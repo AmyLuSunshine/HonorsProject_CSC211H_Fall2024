@@ -3,22 +3,29 @@
 
 class Job {
 public:
-    Job() = default;
     Job(int id, const QString& title, const QString& department,
-        const QString& description, double payRate)
-        : id(id), title(title), department(department),
-        description(description), payRate(payRate) {}
+        const QString& description, double payRate, const QString& requirements = "",
+        const QString& benefits = "", const QString& contactEmail = "")
+        : id(id), title(title), department(department), description(description),
+        payRate(payRate), requirements(requirements), benefits(benefits),
+        contactEmail(contactEmail) {}
 
     int getId() const { return id; }
     QString getTitle() const { return title; }
     QString getDepartment() const { return department; }
     QString getDescription() const { return description; }
     double getPayRate() const { return payRate; }
+    QString getRequirements() const { return requirements; }
+    QString getBenefits() const { return benefits; }
+    QString getContactEmail() const { return contactEmail; }
 
 private:
-    int id = -1;
+    int id;
     QString title;
     QString department;
     QString description;
-    double payRate = 0.0;
+    double payRate;
+    QString requirements;
+    QString benefits;
+    QString contactEmail;
 };

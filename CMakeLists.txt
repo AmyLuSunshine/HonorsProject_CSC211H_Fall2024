@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Set Qt prefix path
-set(CMAKE_PREFIX_PATH "C:/Qt/6.5.7/msvc2019_64")
+set(CMAKE_PREFIX_PATH "C:/Qt/6.5.7/mingw_64")
 
 # Find Qt packages
 find_package(Qt6 REQUIRED COMPONENTS
@@ -18,7 +18,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Sql
 )
 
-# Define source files
+# Source and header files
 set(PROJECT_SOURCES
     src/main.cpp
     src/auth/loginwindow.cpp
@@ -34,7 +34,6 @@ set(PROJECT_SOURCES
     src/ui/searchfilterwidget.cpp
 )
 
-# Define header files
 set(PROJECT_HEADERS
     include/auth/loginwindow.h
     include/auth/registerwindow.h
@@ -49,19 +48,15 @@ set(PROJECT_HEADERS
     include/ui/searchfilterwidget.h
 )
 
-# Create executable
 add_executable(${PROJECT_NAME}
     ${PROJECT_SOURCES}
     ${PROJECT_HEADERS}
 )
 
-# Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# Link Qt libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
     Qt6::Gui
@@ -69,53 +64,42 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Sql
 )
 
-# Copy SQLite DLL if needed
-if(WIN32)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${CMAKE_PREFIX_PATH}/bin/Qt6Sql${DEBUG_SUFFIX}.dll"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    )
-
-    # Copy SQLite plugin
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/sqldrivers/"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${CMAKE_PREFIX_PATH}/plugins/sqldrivers/qsqlite${DEBUG_SUFFIX}.dll"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/sqldrivers/"
-    )
-endif()
-
-# For Windows, copy Qt DLLs
+# Deployment
 if(WIN32)
     set(DEBUG_SUFFIX)
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
         set(DEBUG_SUFFIX "d")
     endif()
 
-    set(QT_INSTALL_PATH "${CMAKE_PREFIX_PATH}")
-    if(NOT EXISTS "${QT_INSTALL_PATH}/bin")
-        set(QT_INSTALL_PATH "${QT_INSTALL_PATH}/..")
-        if(NOT EXISTS "${QT_INSTALL_PATH}/bin")
-            set(QT_INSTALL_PATH "${QT_INSTALL_PATH}/..")
-        endif()
-    endif()
+    # Copy Qt DLLs
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Qt6::Core>
+            $<TARGET_FILE:Qt6::Gui>
+            $<TARGET_FILE:Qt6::Widgets>
+            $<TARGET_FILE:Qt6::Sql>
+            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    )
 
-    if(EXISTS "${QT_INSTALL_PATH}/plugins/platforms/qwindows${DEBUG_SUFFIX}.dll")
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/platforms/")
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-                "${QT_INSTALL_PATH}/plugins/platforms/qwindows${DEBUG_SUFFIX}.dll"
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/platforms/")
-    endif()
+    # Copy platform plugin
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/platforms"
+    )
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_PREFIX_PATH}/plugins/platforms/qwindows.dll"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/platforms"
+    )
 
-    foreach(QT_LIB Core Gui Widgets)
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-                "${QT_INSTALL_PATH}/bin/Qt6${QT_LIB}${DEBUG_SUFFIX}.dll"
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>")
-    endforeach(QT_LIB)
+    # Copy SQL plugins
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/sqldrivers"
+    )
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_PREFIX_PATH}/plugins/sqldrivers/qsqlite.dll"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/sqldrivers"
+    )
 endif()
