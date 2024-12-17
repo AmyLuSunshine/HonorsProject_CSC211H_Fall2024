@@ -25,12 +25,11 @@ private:
     bool isValidBMCCEmail(const QString& email);
 
     Database* database;
+    QLineEdit* fullNameEdit;
     QLineEdit* emailEdit;
+    QLineEdit* emplidEdit;
     QLineEdit* passwordEdit;
     QLineEdit* confirmPasswordEdit;
-    QLineEdit* emplidEdit;
-    QLineEdit* majorEdit;
-    QLineEdit* gpaEdit;
     QPushButton* registerButton;
     QPushButton* loginButton;
     QLabel* titleLabel;

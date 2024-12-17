@@ -1,5 +1,4 @@
 #pragma once
-
 #include <QObject>
 #include <QSqlDatabase>
 #include <QString>
@@ -14,14 +13,19 @@ public:
     ~Database();
 
     bool connectToDatabase();
-    bool validateLogin(const QString& username, const QString& password);
-    bool registerUser(const QString& username, const QString& password,
-                      const QString& email, const QString& firstName,
-                      const QString& lastName);
+    bool validateLogin(const QString& email, const QString& password);
+    bool registerUser(const QString& fullName, const QString& password,
+                      const QString& email, const QString& emplid,
+                      const QString& major = "", const QString& gpa = "",
+                      const QString& gradDate = "");
+
+    bool updateProfile(const QString& email, const QString& major,
+                       const QString& gpa, const QString& gradDate);
+
+    User getUserData(const QString& email);
     std::vector<Job> getJobs();
-    User getUserData(const QString& username);
-    bool createTables();
 
 private:
     QSqlDatabase db;
+    bool createTables();
 };

@@ -171,7 +171,7 @@ void MainWindow::handleLogout() {
     }
 }
 
-void MainWindow::loadUserData(const QString& username) {
-    currentUser = database->getUserData(username);
-    profileWidget->loadUserProfile(username);
+void MainWindow::loadUserData(const QString& email) {
+    currentUser = database->getUserData(email);
+    profileWidget->loadUserProfile(email);
 }

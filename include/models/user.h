@@ -5,21 +5,24 @@
 class User {
 public:
     User() = default;
-    User(const QString& username, const QString& email, 
-         const QString& firstName, const QString& lastName);
+    User(const QString& email, const QString& fullName,
+         const QString& emplid, const QString& major = "",
+         const QString& gpa = "", const QString& gradDate = "")
+        : email(email), fullName(fullName), emplid(emplid),
+        major(major), gpa(gpa), gradDate(gradDate) {}
 
-    int getId() const { return id; }
-    QString getUsername() const { return username; }
     QString getEmail() const { return email; }
-    QString getFirstName() const { return firstName; }
-    QString getLastName() const { return lastName; }
-    QDateTime getCreatedAt() const { return createdAt; }
+    QString getFullName() const { return fullName; }
+    QString getEmplid() const { return emplid; }
+    QString getMajor() const { return major; }
+    QString getGpa() const { return gpa; }
+    QString getGradDate() const { return gradDate; }
 
 private:
-    int id = -1;
-    QString username;
     QString email;
-    QString firstName;
-    QString lastName;
-    QDateTime createdAt;
+    QString fullName;
+    QString emplid;
+    QString major;
+    QString gpa;
+    QString gradDate;
 };

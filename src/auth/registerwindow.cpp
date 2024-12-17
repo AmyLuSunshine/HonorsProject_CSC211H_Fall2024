@@ -1,10 +1,13 @@
+// #include <QVBoxLayout>
+// #include <QLabel>
+// #include <QLineEdit>
+// #include <QPushButton>
+// #include <QRegularExpression>
+
+
 #include "auth/registerwindow.h"
 #include <QVBoxLayout>
-#include <QLabel>
-#include <QLineEdit>
-#include <QPushButton>
 #include <QMessageBox>
-#include <QRegularExpression>
 
 RegisterWindow::RegisterWindow(Database* db, QWidget *parent)
     : QWidget(parent), database(db) {
@@ -17,34 +20,33 @@ void RegisterWindow::setupUI() {
     mainLayout->setSpacing(20);
     mainLayout->setContentsMargins(50, 50, 50, 50);
 
-    titleLabel = new QLabel("Create Account", this);
+    titleLabel = new QLabel("Register", this);
     titleLabel->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(titleLabel);
 
+    // Full Name
+    fullNameEdit = new QLineEdit(this);
+    fullNameEdit->setPlaceholderText("Full Name");
+    fullNameEdit->setMinimumHeight(40);
+    mainLayout->addWidget(fullNameEdit);
+
     // Email
     emailEdit = new QLineEdit(this);
-    emailEdit->setPlaceholderText("BMCC Email (@stu.bmcc.cuny.edu)");
+    emailEdit->setPlaceholderText("Email (@stu.bmcc.cuny.edu)");
     emailEdit->setMinimumHeight(40);
     mainLayout->addWidget(emailEdit);
-    connect(emailEdit, &QLineEdit::textChanged, this, &RegisterWindow::validateEmail);
+    QLabel* emailHint = new QLabel("Use your BMCC email (@stu.bmcc.cuny.edu)", this);
+    emailHint->setStyleSheet("color: #666666; font-size: 12px;");
+    mainLayout->addWidget(emailHint);
 
     // EMPLID
     emplidEdit = new QLineEdit(this);
     emplidEdit->setPlaceholderText("EMPLID");
     emplidEdit->setMinimumHeight(40);
     mainLayout->addWidget(emplidEdit);
-
-    // Major
-    majorEdit = new QLineEdit(this);
-    majorEdit->setPlaceholderText("Major");
-    majorEdit->setMinimumHeight(40);
-    mainLayout->addWidget(majorEdit);
-
-    // GPA
-    gpaEdit = new QLineEdit(this);
-    gpaEdit->setPlaceholderText("GPA");
-    gpaEdit->setMinimumHeight(40);
-    mainLayout->addWidget(gpaEdit);
+    QLabel* emplidHint = new QLabel("Your 8-digit BMCC Student ID", this);
+    emplidHint->setStyleSheet("color: #666666; font-size: 12px;");
+    mainLayout->addWidget(emplidHint);
 
     // Password
     passwordEdit = new QLineEdit(this);
@@ -62,7 +64,8 @@ void RegisterWindow::setupUI() {
 
     // Error label
     errorLabel = new QLabel(this);
-    errorLabel->setStyleSheet("color: red;");
+    errorLabel->setStyleSheet("color: #D32F2F;");
+    errorLabel->setWordWrap(true);
     errorLabel->hide();
     mainLayout->addWidget(errorLabel);
 
@@ -78,39 +81,51 @@ void RegisterWindow::setupUI() {
     // Connect signals
     connect(registerButton, &QPushButton::clicked, this, &RegisterWindow::handleRegistration);
     connect(loginButton, &QPushButton::clicked, this, &RegisterWindow::onLoginClicked);
+    connect(emailEdit, &QLineEdit::textChanged, this, &RegisterWindow::validateEmail);
 
-    setFixedSize(400, 700);
+    setFixedSize(400, 650);
 }
 
 void RegisterWindow::setupStyles() {
     setStyleSheet(
         "QWidget { background-color: #FFFFFF; }"
-        "QLabel { font-size: 16px; }"
-        "QLineEdit { padding: 10px; border: 2px solid #E0E0E0; border-radius: 5px; "
-        "           margin: 5px 0; font-size: 14px; color: #333333; }"
-        "QPushButton { padding: 10px; background-color: #2196F3; color: white; "
-        "             border: none; border-radius: 5px; font-size: 14px; }"
-        "QPushButton:hover { background-color: #1976D2; }"
+        "QLabel { color: #333333; font-size: 14px; }"
+        "QLineEdit { padding: 10px; border: 1px solid #E0E0E0; border-radius: 4px; "
+        "           background: #F5F5F5; color: #333333; }"
+        "QPushButton { background-color: #0D47A1; color: white; border: none; "
+        "             border-radius: 4px; font-weight: bold; }"
+        "QPushButton:hover { background-color: #1565C0; }"
         );
 
-    titleLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #2196F3; margin: 20px 0;");
+    titleLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #0D47A1; margin: 20px 0;");
     loginButton->setStyleSheet(
         "QPushButton { background-color: transparent; color: #2196F3; }"
-        "QPushButton:hover { background-color: transparent; color: #1976D2; }"
+        "QPushButton:hover { text-decoration: underline; }"
         );
 }
 
 void RegisterWindow::handleRegistration() {
-    QString email = emailEdit->text();
+    QString fullName = fullNameEdit->text().trimmed();
+    QString email = emailEdit->text().trimmed();
+    QString emplid = emplidEdit->text().trimmed();
     QString password = passwordEdit->text();
     QString confirmPass = confirmPasswordEdit->text();
-    QString emplid = emplidEdit->text();
-    QString major = majorEdit->text();
-    QString gpa = gpaEdit->text();
 
     // Validation
+    if (fullName.isEmpty() || email.isEmpty() || emplid.isEmpty() || password.isEmpty()) {
+        errorLabel->setText("All fields are required");
+        errorLabel->show();
+        return;
+    }
+
     if (!isValidBMCCEmail(email)) {
-        errorLabel->setText("Must use @stu.bmcc.cuny.edu email");
+        errorLabel->setText("Please use your BMCC email (@stu.bmcc.cuny.edu)");
+        errorLabel->show();
+        return;
+    }
+
+    if (emplid.length() != 8 || !emplid.toInt()) {
+        errorLabel->setText("Please enter a valid 8-digit EMPLID");
         errorLabel->show();
         return;
     }
@@ -121,8 +136,14 @@ void RegisterWindow::handleRegistration() {
         return;
     }
 
-    // Register user
-    if (database->registerUser(email, password, email, emplid, major)) {
+    if (password.length() < 6) {
+        errorLabel->setText("Password must be at least 6 characters");
+        errorLabel->show();
+        return;
+    }
+
+    // Try to register
+    if (database->registerUser(email, password, email, fullName, emplid)) {
         QMessageBox::information(this, "Success", "Registration successful!");
         emit registrationSuccessful();
         emit switchToLogin();
@@ -138,7 +159,7 @@ void RegisterWindow::onLoginClicked() {
 
 void RegisterWindow::validateEmail(const QString& email) {
     if (!email.isEmpty() && !isValidBMCCEmail(email)) {
-        errorLabel->setText("Must use @stu.bmcc.cuny.edu email");
+        errorLabel->setText("Please use your BMCC email (@stu.bmcc.cuny.edu)");
         errorLabel->show();
     } else {
         errorLabel->hide();
