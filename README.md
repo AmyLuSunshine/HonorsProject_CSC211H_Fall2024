@@ -1,1 +1,1 @@
-# HonorsProject_CSC211H_Fall2024
+# HonorsProject_CSC211H
